@@ -30,6 +30,10 @@ This project processes Yelp reviews through various stages to clean, tokenize, h
    - Run `vectorize.py` or `tfidf.py` to vectorize the new dataset using TF-IDF.
    - This will generate a TF-IDF vectorized dataset for further analysis.
 
+   prep the data: pere_data
+
+   
+
 ## Running the Scripts
 
 To run each script, use the following command in your terminal:
