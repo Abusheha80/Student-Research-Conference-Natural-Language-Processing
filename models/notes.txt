@@ -1,0 +1,5 @@
+fix data imbalance
+
+do oversampling and undersampling / smoft
+
+do model selection with 5 fold or 10 fold cross validation

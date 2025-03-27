@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
 
-df = pd.read_csv("reviews.csv", encoding="utf-8")
+df = pd.read_csv("data/10kreviews.csv", encoding="utf-8")
 
 def safe_convert(text):
     try:
