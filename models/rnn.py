@@ -8,7 +8,7 @@ from tensorflow.keras.layers import Embedding, SimpleRNN, Dense, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
-df = pd.read_csv("data/10kreviews.csv") 
+df = pd.read_csv("data/100kreviews.csv") 
 texts = df["text"].astype(str).tolist()
 labels = df["stars"].values
 

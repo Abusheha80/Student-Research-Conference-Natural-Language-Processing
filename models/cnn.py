@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+# Fix the keras import paths
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.layers import (
@@ -9,87 +10,66 @@ from tensorflow.keras.layers import (
 )
 from tensorflow.keras.models import Model
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report, accuracy_score
+import matplotlib.pyplot as plt
 
-# 1) LOAD YOUR DATA
-df = pd.read_csv("data/10kreviews.csv", encoding="utf-8")
-texts = df["text"].astype(str).tolist()
-labels = df["stars"].values
+# Load and preprocess data
+df = pd.read_csv("data/100kreviews.csv")
 
-# 2) TRAIN/TEST SPLIT
-X_train, X_val, y_train, y_val = train_test_split(
-    texts,
-    labels,
-    test_size=0.2,
-    random_state=42,
-    stratify=labels
-)
+def map_sentiment(stars):
+    if stars in [1, 2]:
+        return "negative"
+    elif stars == 3:
+        return "neutral"
+    else:
+        return "positive"
 
-# 3) TOKENIZE & CONVERT TEXT TO SEQUENCES
-vocab_size = 20000  
-tokenizer = Tokenizer(num_words=vocab_size, oov_token="<UNK>")
-tokenizer.fit_on_texts(X_train)
+df["sentiment"] = df["stars"].apply(map_sentiment)
+X = df["text"]
+y = df["sentiment"]
 
-X_train_seq = tokenizer.texts_to_sequences(X_train)
-X_val_seq   = tokenizer.texts_to_sequences(X_val)
+le = LabelEncoder()
+y_encoded = le.fit_transform(y)
 
-# 4) PAD SEQUENCES
+X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.3, random_state=42, stratify=y_encoded)
+
+# Tokenization
+max_words = 5000
 max_len = 100
-X_train_pad = pad_sequences(X_train_seq, maxlen=max_len, padding='post')
-X_val_pad   = pad_sequences(X_val_seq,   maxlen=max_len, padding='post')
 
-# 5) SHIFT LABELS FROM [1..5] TO [0..4] IF NEEDED
-y_train = y_train - 1
-y_val   = y_val   - 1
+tokenizer = Tokenizer(num_words=max_words)
+tokenizer.fit_on_texts(X_train)
+X_train_seq = pad_sequences(tokenizer.texts_to_sequences(X_train), maxlen=max_len)
+X_test_seq = pad_sequences(tokenizer.texts_to_sequences(X_test), maxlen=max_len)
 
-# 6) BUILD A MULTI-CHANNEL CNN MODEL
-embedding_dim = 128  # or 200/300 if you prefer
+y_train_cat = to_categorical(y_train)
+y_test_cat = to_categorical(y_test)
 
-input_layer = Input(shape=(max_len,))
-embedding_layer = Embedding(
-    input_dim=vocab_size, 
-    output_dim=embedding_dim, 
-    input_length=max_len
-)(input_layer)
+# CNN model
+model = Sequential()
+model.add(Embedding(max_words, 64, input_length=max_len))
+model.add(Conv1D(128, 5, activation='relu'))
+model.add(GlobalMaxPooling1D())
+model.add(Dropout(0.2))
+model.add(Dense(3, activation='softmax'))
 
-# --- PARALLEL CONV LAYERS WITH DIFFERENT KERNEL SIZES ---
-conv_k3 = Conv1D(filters=128, kernel_size=3, activation='relu')(embedding_layer)
-pool_k3 = GlobalMaxPooling1D()(conv_k3)
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.fit(X_train_seq, y_train_cat, epochs=5, batch_size=32, verbose=1)
 
-conv_k4 = Conv1D(filters=128, kernel_size=4, activation='relu')(embedding_layer)
-pool_k4 = GlobalMaxPooling1D()(conv_k4)
+# Evaluate
+y_pred = model.predict(X_test_seq)
+y_pred_labels = np.argmax(y_pred, axis=1)
 
-conv_k5 = Conv1D(filters=128, kernel_size=5, activation='relu')(embedding_layer)
-pool_k5 = GlobalMaxPooling1D()(conv_k5)
+cm = confusion_matrix(y_test, y_pred_labels)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=le.classes_)
 
-# --- CONCATENATE THE POOLED FEATURES ---
-concat = concatenate([pool_k3, pool_k4, pool_k5])
+os.makedirs("output/matrix", exist_ok=True)
+plt.figure(figsize=(8, 6))
+disp.plot(cmap=plt.cm.Blues)
+plt.title("CNN Confusion Matrix")
+plt.savefig("output/matrix/cnn_confusion_matrix.png")
+plt.close()
 
-# --- DENSE LAYERS ---
-dense = Dense(128, activation='relu')(concat)
-dropout = Dropout(0.5)(dense)
-output = Dense(5, activation='softmax')(dropout)
-
-model = Model(inputs=input_layer, outputs=output)
-model.compile(
-    loss='sparse_categorical_crossentropy',
-    optimizer='adam',
-    metrics=['accuracy']
-)
-
-model.summary()
-
-# 7) TRAIN THE MODEL
-model.fit(
-    X_train_pad, y_train,
-    validation_data=(X_val_pad, y_val),
-    epochs=5,        # You can increase to 10+ if you have enough data
-    batch_size=64
-)
-
-# 8) EVALUATE
-pred_probs = model.predict(X_val_pad)
-y_pred = np.argmax(pred_probs, axis=1)
-
-print("Classification Report:")
-print(classification_report(y_val, y_pred))
+print("Accuracy:", accuracy_score(y_test, y_pred_labels))
+print(classification_report(y_test, y_pred_labels, target_names=le.classes_))
