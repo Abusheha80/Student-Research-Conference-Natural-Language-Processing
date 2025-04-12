@@ -10,15 +10,17 @@ import spacy
 from langdetect import detect
 
 # ------------------ Setup ------------------
-nltk.download('stopwords')
-nltk.download('punkt')
 stop_words = set(nltk.corpus.stopwords.words('english'))
 
 # ------------------ Step 1: Load JSON and Select Reviews ------------------
 def parse_date(review):
     return datetime.strptime(review['date'], '%Y-%m-%d %H:%M:%S')
 
+<<<<<<< Updated upstream
 def load_and_select_reviews(json_path, top_n=100000):
+=======
+def load_and_select_reviews(json_path, top_n=100):
+>>>>>>> Stashed changes
     reviews = []
     with open(json_path, 'r', encoding='utf-8') as f:
         for line in f:
@@ -45,7 +47,9 @@ def clean_text(text):
         text = re.sub(r'[^\w\s]', '', text)
         text = re.sub(r'\s+', ' ', text)
         words = text.split()
+        # Remove words with repeating characters
         words = [word for word in words if not re.search(r'(.)\1{2,}', word)]
+        # Remove stopwords
         words = [word for word in words if word not in stop_words]
         return ' '.join(words).strip()
     return text
@@ -119,25 +123,36 @@ if __name__ == "__main__":
     texts_to_lemmatize = df['negation_review_str'].tolist()
     df['lemmatized_text'] = lemmatize_texts(texts_to_lemmatize)
 
+    # Filter to English-only text
     df = df[df['lemmatized_text'].apply(is_english)]
 
-    # Assign sentiment
+    # ------------------ Sentiment Assignment ------------------
     def assign_sentiment(star):
+        # Adjust logic as desired:
+        # 4 or 5 => positive, 3 => neutral, 1 or 2 => negative
         if star >= 4:
             return 'positive'
         elif star == 3:
             return 'neutral'
-        else:
+        else:  # covers 1 and 2
             return 'negative'
 
     df['sentiment'] = df['stars'].apply(assign_sentiment)
 
+<<<<<<< Updated upstream
     # Save unbalanced dataset
     unbalanced_csv_path = "data/100kreviews_unbalanced.csv"
     df[['business_id', 'stars', 'date', 'lemmatized_text', 'sentiment']].rename(columns={'lemmatized_text': 'text'}).to_csv(unbalanced_csv_path, index=False)
+=======
+    # ------------------ Saving the Unbalanced Dataset ------------------
+    unbalanced_csv_path = "data/100reviews_unbalanced.csv"
+    df[['business_id', 'stars', 'date', 'lemmatized_text', 'sentiment']] \
+        .rename(columns={'lemmatized_text': 'text'}) \
+        .to_csv(unbalanced_csv_path, index=False)
+>>>>>>> Stashed changes
     print(f"Saved unbalanced dataset to {unbalanced_csv_path} with shape: {df.shape}")
 
-    # Balance Classes by Undersampling
+    # ------------------ Balancing Classes by Undersampling ------------------
     print("Balancing sentiment distribution...")
     min_class_size = df['sentiment'].value_counts().min()
 
@@ -150,8 +165,13 @@ if __name__ == "__main__":
     print("Balanced sentiment proportions:")
     print(balanced_df['sentiment'].value_counts(normalize=True) * 100)
 
-    final_df = balanced_df[['business_id', 'stars', 'date', 'lemmatized_text', 'sentiment']].rename(columns={'lemmatized_text': 'text'})
+    final_df = balanced_df[['business_id', 'stars', 'date', 'lemmatized_text', 'sentiment']] \
+        .rename(columns={'lemmatized_text': 'text'})
 
+<<<<<<< Updated upstream
     final_csv_path = "data/100kreviews.csv"
+=======
+    final_csv_path = "data/100reviews.csv"
+>>>>>>> Stashed changes
     final_df.to_csv(final_csv_path, index=False)
     print(f"Saved balanced dataset to {final_csv_path} with shape: {final_df.shape}")
