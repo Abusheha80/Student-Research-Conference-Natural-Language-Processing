@@ -16,11 +16,7 @@ stop_words = set(nltk.corpus.stopwords.words('english'))
 def parse_date(review):
     return datetime.strptime(review['date'], '%Y-%m-%d %H:%M:%S')
 
-<<<<<<< Updated upstream
-def load_and_select_reviews(json_path, top_n=100000):
-=======
-def load_and_select_reviews(json_path, top_n=100):
->>>>>>> Stashed changes
+def load_and_select_reviews(json_path, top_n=1000000):
     reviews = []
     with open(json_path, 'r', encoding='utf-8') as f:
         for line in f:
@@ -139,17 +135,11 @@ if __name__ == "__main__":
 
     df['sentiment'] = df['stars'].apply(assign_sentiment)
 
-<<<<<<< Updated upstream
-    # Save unbalanced dataset
-    unbalanced_csv_path = "data/100kreviews_unbalanced.csv"
-    df[['business_id', 'stars', 'date', 'lemmatized_text', 'sentiment']].rename(columns={'lemmatized_text': 'text'}).to_csv(unbalanced_csv_path, index=False)
-=======
     # ------------------ Saving the Unbalanced Dataset ------------------
-    unbalanced_csv_path = "data/100reviews_unbalanced.csv"
+    unbalanced_csv_path = "data/1mreviews_unbalanced.csv"
     df[['business_id', 'stars', 'date', 'lemmatized_text', 'sentiment']] \
         .rename(columns={'lemmatized_text': 'text'}) \
         .to_csv(unbalanced_csv_path, index=False)
->>>>>>> Stashed changes
     print(f"Saved unbalanced dataset to {unbalanced_csv_path} with shape: {df.shape}")
 
     # ------------------ Balancing Classes by Undersampling ------------------
@@ -168,10 +158,6 @@ if __name__ == "__main__":
     final_df = balanced_df[['business_id', 'stars', 'date', 'lemmatized_text', 'sentiment']] \
         .rename(columns={'lemmatized_text': 'text'})
 
-<<<<<<< Updated upstream
-    final_csv_path = "data/100kreviews.csv"
-=======
-    final_csv_path = "data/100reviews.csv"
->>>>>>> Stashed changes
+    final_csv_path = "data/1mreviews.csv"
     final_df.to_csv(final_csv_path, index=False)
     print(f"Saved balanced dataset to {final_csv_path} with shape: {final_df.shape}")

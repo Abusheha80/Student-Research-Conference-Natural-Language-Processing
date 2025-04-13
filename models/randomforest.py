@@ -1,112 +1,90 @@
 import os
-import pandas as pd
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
-
+import seaborn as sns
+from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split, cross_val_score, KFold
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import (
+    accuracy_score, precision_score, recall_score, f1_score, 
+    confusion_matrix, roc_auc_score, roc_curve
+)
+from sklearn.preprocessing import label_binarize
 
-# -------------------------------------------------------
-# 1) LOAD DATA
-# -------------------------------------------------------
-df = pd.read_csv("data/100kreviews.csv")  # Path to your CSV file
+df = pd.read_csv('data/1mreviews.csv')
 
-# -------------------------------------------------------
-# 2) PREPROCESS: MAP STARS TO SENTIMENT
-# -------------------------------------------------------
-#  1/2 stars -> negative
-#  3 star    -> neutral
-#  4/5 stars -> positive
-def map_stars_to_sentiment(star):
+def map_sentiment(star):
     if star in [1, 2]:
-        return "negative"
+        return 0
     elif star == 3:
-        return "neutral"
-    else:  # 4 or 5
-        return "positive"
+        return 1
+    else:
+        return 2
 
-df["sentiment"] = df["stars"].apply(map_stars_to_sentiment)
-
-# (Optional) If rows have missing values in key columns, drop them:
-df.dropna(subset=["review", "stars"], inplace=True)
-
-# -------------------------------------------------------
-# 3) SPLIT DATA: 70% TRAIN / 30% TEST
-# -------------------------------------------------------
-X = df["review"]
-y = df["sentiment"]
+df['label'] = df['stars'].apply(map_sentiment)
+tfidf = TfidfVectorizer(stop_words='english', max_features=5000)
+X = tfidf.fit_transform(df['text'])
+y = df['label']
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.30, random_state=42, stratify=y
+    X, y, test_size=0.3, stratify=y, random_state=42
 )
 
-# -------------------------------------------------------
-# 4) BUILD A PIPELINE WITH TF-IDF + RANDOM FOREST
-# -------------------------------------------------------
-pipeline = Pipeline([
-    ("tfidf", TfidfVectorizer()),
-    ("rf", RandomForestClassifier(n_estimators=100, random_state=42))
-])
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+cv_scores = cross_val_score(model, X_train, y_train, cv=cv, scoring='accuracy')
 
-# -------------------------------------------------------
-# 5) 5-FOLD CROSS VALIDATION ON TRAINING SET
-# -------------------------------------------------------
-cv = KFold(n_splits=5, shuffle=True, random_state=42)
-cv_scores = cross_val_score(pipeline, X_train, y_train, cv=cv, scoring="accuracy")
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+y_prob = model.predict_proba(X_test)
 
-print("Cross-validation accuracy scores (5-fold):", cv_scores)
-print("Average cross-validation accuracy:", cv_scores.mean())
+acc = accuracy_score(y_test, y_pred)
+prec = precision_score(y_test, y_pred, average='weighted')
+rec = recall_score(y_test, y_pred, average='weighted')
+f1 = f1_score(y_test, y_pred, average='weighted')
+cm = confusion_matrix(y_test, y_pred)
+y_bin = label_binarize(y_test, classes=[0,1,2])
+auc = roc_auc_score(y_bin, y_prob, multi_class='ovr')
 
-# -------------------------------------------------------
-# 6) TRAIN FINAL MODEL ON THE ENTIRE TRAINING SET
-# -------------------------------------------------------
-pipeline.fit(X_train, y_train)
+print(f"Accuracy:  {acc:.4f}")
+print(f"Precision: {prec:.4f}")
+print(f"Recall:    {rec:.4f}")
+print(f"F1 Score:  {f1:.4f}")
+print(f"AUC:       {auc:.4f}")
+print(f"CV Mean Accuracy: {cv_scores.mean():.4f}")
 
-# -------------------------------------------------------
-# 7) EVALUATE ON TEST SET
-# -------------------------------------------------------
-y_pred = pipeline.predict(X_test)
-print("\nClassification Report on Test Set:")
-print(classification_report(y_test, y_pred))
+outdir = 'output/matrix'
+os.makedirs(outdir, exist_ok=True)
 
-# -------------------------------------------------------
-# 8) CONFUSION MATRIX & SAVE TO OUTPUT
-# -------------------------------------------------------
-cm = confusion_matrix(y_test, y_pred, labels=["negative", "neutral", "positive"])
-print("Confusion Matrix:\n", cm)
-
-# Create an output folder if it doesn't exist
-output_folder = "data/matrix"
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
-
-# Plot the confusion matrix with matplotlib
-fig, ax = plt.subplots(figsize=(5, 4))
-ax.imshow(cm, cmap=plt.cm.Blues)
-
-# Set ticks and labels
-labels = ["negative", "neutral", "positive"]
-ax.set_xticks(np.arange(len(labels)))
-ax.set_yticks(np.arange(len(labels)))
-ax.set_xticklabels(labels)
-ax.set_yticklabels(labels)
-
-# Label the values in the matrix
-for i in range(cm.shape[0]):
-    for j in range(cm.shape[1]):
-        ax.text(j, i, cm[i, j], ha="center", va="center", color="black")
-
-plt.title("Random Forest Confusion Matrix")
-plt.xlabel("Predicted Label")
-plt.ylabel("True Label")
+plt.figure()
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=['Neg','Neu','Pos'], yticklabels=['Neg','Neu','Pos'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Random Forest Confusion Matrix')
 plt.tight_layout()
-
-# Save the confusion matrix figure
-matrix_path = os.path.join(output_folder, "rf_matrix.png")
-plt.savefig(matrix_path)
+plt.savefig(f'{outdir}/random_forest_confusion_matrix.png')
 plt.close()
 
-print(f"Confusion matrix figure saved to: {matrix_path}")
+plt.figure()
+for i in range(3):
+    fpr, tpr, _ = roc_curve((y_test==i).astype(int), y_prob[:, i])
+    plt.plot(fpr, tpr, label=f'Class {i}')
+plt.title('Random Forest ROC Curve')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.legend()
+plt.tight_layout()
+plt.savefig(f'{outdir}/random_forest_roc_curve.png')
+plt.close()
+
+df_metrics = pd.DataFrame({
+    'Accuracy': [acc],
+    'Precision': [prec],
+    'Recall': [rec],
+    'F1 Score': [f1],
+    'AUC': [auc],
+    'CV Mean Accuracy': [cv_scores.mean()]
+})
+df_metrics.to_csv(f'{outdir}/random_forest_metrics.csv', index=False)
