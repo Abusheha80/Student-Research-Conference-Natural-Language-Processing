@@ -12,7 +12,7 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import label_binarize
 
-df = pd.read_csv('data/1mreviews.csv')
+df = pd.read_csv('data/100kreviews.csv')
 
 def map_sentiment(star):
     if star in [1, 2]:

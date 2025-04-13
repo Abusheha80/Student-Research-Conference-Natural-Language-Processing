@@ -15,7 +15,7 @@ from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-df = pd.read_csv('data/1mreviews.csv')
+df = pd.read_csv('data/100kreviews.csv')
 
 def map_sentiment(star):
     if star in [1, 2]:

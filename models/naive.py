@@ -13,7 +13,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import label_binarize
 
 # Load data
-df = pd.read_csv('data/1mreviews.csv')
+df = pd.read_csv('data/100kreviews.csv')
 
 # Map stars to sentiment
 def map_sentiment(star):

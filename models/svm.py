@@ -12,7 +12,7 @@ import seaborn as sns
 import os
 
 # Load data
-df = pd.read_csv('data/1mreviews.csv')  # change path if needed
+df = pd.read_csv('data/100kreviews.csv')  # change path if needed
 
 # Map stars to sentiment
 def map_sentiment(star):
