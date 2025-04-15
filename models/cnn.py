@@ -16,7 +16,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 # Load data
-df = pd.read_csv('data/100kreviews.csv')
+df = pd.read_csv('data/1mreviews.csv')
 
 # Map stars to sentiment
 def map_sentiment(star):
