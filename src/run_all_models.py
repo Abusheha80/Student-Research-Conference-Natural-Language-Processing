@@ -12,6 +12,7 @@ script_order = [
     "cnn.py",
     "rnn.py",
     "lstm.py",
+    "svm.py"
 ]
 
 # Path to your models folder
