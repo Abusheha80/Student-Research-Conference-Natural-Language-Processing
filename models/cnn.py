@@ -15,10 +15,9 @@ from tensorflow.keras.layers import Embedding, Conv1D, GlobalMaxPooling1D, Dense
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-# Load data
 df = pd.read_csv('data/1mreviews.csv')
 
-# Map stars to sentiment
+#stars to sentiment
 def map_sentiment(star):
     if star in [1, 2]:
         return 0
@@ -29,14 +28,13 @@ def map_sentiment(star):
 
 df['label'] = df['stars'].apply(map_sentiment)
 
-# Prepare data
 texts = df['text'].astype(str).values
 labels = df['label'].values
 X_train_texts, X_test_texts, y_train, y_test = train_test_split(
     texts, labels, test_size=0.3, stratify=labels, random_state=42
 )
 
-# Convert text to sequences
+#text to sequences
 MAX_VOCAB_SIZE = 10000
 MAX_SEQUENCE_LEN = 200
 tokenizer = Tokenizer(num_words=MAX_VOCAB_SIZE, lower=True, oov_token="<UNK>")
@@ -47,7 +45,7 @@ X_test_seq = tokenizer.texts_to_sequences(X_test_texts)
 X_train_pad = pad_sequences(X_train_seq, maxlen=MAX_SEQUENCE_LEN, padding='post', truncating='post')
 X_test_pad = pad_sequences(X_test_seq, maxlen=MAX_SEQUENCE_LEN, padding='post', truncating='post')
 
-# Build CNN model
+#cnn model
 def create_cnn_model():
     model = Sequential()
     model.add(Embedding(input_dim=MAX_VOCAB_SIZE, output_dim=100, input_length=MAX_SEQUENCE_LEN))
@@ -59,7 +57,7 @@ def create_cnn_model():
     model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model
 
-# 5-fold cross validation
+#5-fold cv
 skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 cv_accuracies = []
 for train_idx, val_idx in skf.split(X_train_pad, y_train):
@@ -71,15 +69,13 @@ for train_idx, val_idx in skf.split(X_train_pad, y_train):
     _, val_acc = cnn_cv.evaluate(X_val_cv, y_val_cv, verbose=0)
     cv_accuracies.append(val_acc)
 
-# Train final model
+#train:
 model = create_cnn_model()
 model.fit(X_train_pad, y_train, epochs=5, batch_size=128, validation_split=0.1, verbose=1)
 
-# Predict
 y_pred_probs = model.predict(X_test_pad)
 y_pred = np.argmax(y_pred_probs, axis=1)
 
-# Metrics
 acc = accuracy_score(y_test, y_pred)
 prec = precision_score(y_test, y_pred, average='weighted')
 rec = recall_score(y_test, y_pred, average='weighted')
@@ -88,7 +84,6 @@ cm = confusion_matrix(y_test, y_pred)
 y_test_bin = tf.keras.utils.to_categorical(y_test, num_classes=3)
 auc = roc_auc_score(y_test_bin, y_pred_probs, multi_class='ovr')
 
-# Print
 print(f"Accuracy:  {acc:.4f}")
 print(f"Precision: {prec:.4f}")
 print(f"Recall:    {rec:.4f}")
@@ -96,10 +91,11 @@ print(f"F1 Score:  {f1:.4f}")
 print(f"AUC:       {auc:.4f}")
 print(f"CV Mean Accuracy: {np.mean(cv_accuracies):.4f}")
 
-# Confusion Matrix and ROC
+
 outdir = 'output/matrix'
 os.makedirs(outdir, exist_ok=True)
 
+#plot confusion matrix
 plt.figure()
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
             xticklabels=['Neg','Neu','Pos'], yticklabels=['Neg','Neu','Pos'])
@@ -110,6 +106,7 @@ plt.tight_layout()
 plt.savefig(f'{outdir}/cnn_confusion_matrix.png')
 plt.close()
 
+#plot roc curve
 plt.figure()
 for i in range(3):
     fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_pred_probs[:, i])
@@ -121,7 +118,6 @@ plt.legend()
 plt.savefig(f'{outdir}/cnn_roc_curve.png')
 plt.close()
 
-# Save metrics
 df_metrics = pd.DataFrame({
     'Accuracy': [acc],
     'Precision': [prec],

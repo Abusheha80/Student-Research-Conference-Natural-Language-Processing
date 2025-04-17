@@ -14,10 +14,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-# Load data
 df = pd.read_csv('data/1mreviews.csv')  # change path if needed
 
-# Map stars to sentiment
+#stars to sentiment
 def map_sentiment(star):
     if star in [1, 2]:
         return 0
@@ -26,14 +25,13 @@ def map_sentiment(star):
     else:
         return 2
 
-    df['label'] = df['stars'].apply(map_stars_to_sentiment)
+df['label'] = df['stars'].apply(map_stars_to_sentiment)
 
-# Vectorize
+# vectorize
 tfidf = TfidfVectorizer(stop_words='english', max_features=5000)
 X = tfidf.fit_transform(df['text'])
 y = df['label']
 
-# Split
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, stratify=y, random_state=42
 )
@@ -43,29 +41,27 @@ svm = SVC(probability=True, random_state=42)
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 cv_scores = cross_val_score(svm, X_train, y_train, cv=cv, scoring='accuracy')
 
-# Train
+#train
 svm.fit(X_train, y_train)
 y_pred = svm.predict(X_test)
 y_prob = svm.predict_proba(X_test)
 
-# Metrics
+#metrics
 acc = accuracy_score(y_test, y_pred)
 prec = precision_score(y_test, y_pred, average='weighted')
 rec = recall_score(y_test, y_pred, average='weighted')
 f1 = f1_score(y_test, y_pred, average='weighted')
 cm = confusion_matrix(y_test, y_pred)
 
-# AUC
-# For multi-class, use one-vs-rest
+#auc
 from sklearn.preprocessing import label_binarize
 y_binarized = label_binarize(y_test, classes=[0,1,2])
 auc = roc_auc_score(y_binarized, y_prob, multi_class='ovr')
 
-# Output folder
 output_dir = 'output/matrix'
 os.makedirs(output_dir, exist_ok=True)
 
-# Confusion matrix plot
+# plotting confusion matrix
 plt.figure(figsize=(5,4))
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
             xticklabels=['Neg','Neu','Pos'], yticklabels=['Neg','Neu','Pos'])
@@ -76,7 +72,7 @@ plt.tight_layout()
 plt.savefig(f'{output_dir}/svm_confusion_matrix.png')
 plt.close()
 
-# ROC plot
+#plotting roc
 plt.figure()
 for i in range(3):
     fpr, tpr, _ = roc_curve((y_test==i).astype(int), y_prob[:, i])
@@ -89,7 +85,7 @@ plt.tight_layout()
 plt.savefig(f'{output_dir}/svm_roc_curve.png')
 plt.close()
 
-# Print
+#metrics
 print(f"Accuracy:  {acc:.4f}")
 print(f"Precision: {prec:.4f}")
 print(f"Recall:    {rec:.4f}")
@@ -97,7 +93,6 @@ print(f"F1 Score:  {f1:.4f}")
 print(f"AUC:       {auc:.4f}")
 print(f"CV Mean Accuracy: {np.mean(cv_scores):.4f}")
 
-# Save metrics
 metrics_df = pd.DataFrame({
     'Accuracy': [acc],
     'Precision': [prec],

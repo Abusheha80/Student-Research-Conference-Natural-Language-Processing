@@ -31,6 +31,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, stratify=y, random_state=42
 )
 
+#random forest model
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 cv_scores = cross_val_score(model, X_train, y_train, cv=cv, scoring='accuracy')
@@ -39,6 +40,7 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 y_prob = model.predict_proba(X_test)
 
+#metrics
 acc = accuracy_score(y_test, y_pred)
 prec = precision_score(y_test, y_pred, average='weighted')
 rec = recall_score(y_test, y_pred, average='weighted')
@@ -57,6 +59,7 @@ print(f"CV Mean Accuracy: {cv_scores.mean():.4f}")
 outdir = 'output/matrix'
 os.makedirs(outdir, exist_ok=True)
 
+#plot confusion matrix
 plt.figure()
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
             xticklabels=['Neg','Neu','Pos'], yticklabels=['Neg','Neu','Pos'])
@@ -67,6 +70,7 @@ plt.tight_layout()
 plt.savefig(f'{outdir}/random_forest_confusion_matrix.png')
 plt.close()
 
+#plot roc curve
 plt.figure()
 for i in range(3):
     fpr, tpr, _ = roc_curve((y_test==i).astype(int), y_prob[:, i])

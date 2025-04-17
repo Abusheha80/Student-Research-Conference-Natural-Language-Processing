@@ -36,6 +36,7 @@ X_train_texts, X_test_texts, y_train, y_test = train_test_split(
 MAX_VOCAB_SIZE = 10000
 MAX_SEQUENCE_LEN = 200
 
+#tokenize and pad
 tokenizer = Tokenizer(num_words=MAX_VOCAB_SIZE, lower=True, oov_token="<UNK>")
 tokenizer.fit_on_texts(X_train_texts)
 X_train_seq = tokenizer.texts_to_sequences(X_train_texts)
@@ -43,6 +44,7 @@ X_test_seq = tokenizer.texts_to_sequences(X_test_texts)
 X_train_pad = pad_sequences(X_train_seq, maxlen=MAX_SEQUENCE_LEN, padding='post', truncating='post')
 X_test_pad = pad_sequences(X_test_seq, maxlen=MAX_SEQUENCE_LEN, padding='post', truncating='post')
 
+#bilstm model
 def create_bilstm_model(vocab_size=MAX_VOCAB_SIZE, embed_dim=100, input_length=MAX_SEQUENCE_LEN):
     model = Sequential()
     model.add(Embedding(input_dim=vocab_size, output_dim=embed_dim, input_length=input_length))
@@ -68,12 +70,14 @@ for train_idx, val_idx in skf.split(X_train_pad, y_train):
 print("5-Fold CV accuracies:", cv_accuracies)
 print("Mean CV accuracy:", np.mean(cv_accuracies))
 
+
 model = create_bilstm_model()
 model.fit(X_train_pad, y_train, epochs=5, batch_size=128, validation_split=0.1, verbose=1)
 
 y_pred_probs = model.predict(X_test_pad)
 y_pred = np.argmax(y_pred_probs, axis=1)
 
+#metrics
 acc = accuracy_score(y_test, y_pred)
 prec = precision_score(y_test, y_pred, average='weighted')
 rec = recall_score(y_test, y_pred, average='weighted')
@@ -92,6 +96,7 @@ print(f"Mean CV Accuracy: {np.mean(cv_accuracies):.4f}")
 outdir = 'output/matrix'
 os.makedirs(outdir, exist_ok=True)
 
+#plot confusion matrix
 plt.figure()
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
             xticklabels=['Neg','Neu','Pos'], yticklabels=['Neg','Neu','Pos'])
@@ -102,6 +107,7 @@ plt.tight_layout()
 plt.savefig(f'{outdir}/bilstm_confusion_matrix.png')
 plt.close()
 
+#plot roc curve
 plt.figure()
 for i in range(3):
     fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_pred_probs[:, i])

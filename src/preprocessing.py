@@ -9,13 +9,13 @@ from nltk.tokenize import word_tokenize
 import spacy
 from langdetect import detect
 
-# ------------------ Setup ------------------
 stop_words = set(nltk.corpus.stopwords.words('english'))
 
-# ------------------ Step 1: Load JSON and Select Reviews ------------------
+
 def parse_date(review):
     return datetime.strptime(review['date'], '%Y-%m-%d %H:%M:%S')
 
+#loading data
 def load_and_select_reviews(json_path, top_n=1000):
     reviews = []
     with open(json_path, 'r', encoding='utf-8') as f:
@@ -28,40 +28,38 @@ def load_and_select_reviews(json_path, top_n=1000):
     top_reviews = heapq.nlargest(top_n, reviews, key=parse_date)
     return pd.DataFrame(top_reviews)
 
-# ------------------ Step 2: Cleaning ------------------
+#cleaning text
 def clean_text(text):
     if isinstance(text, str):
         text = text.lower()
         contractions = {
             "can't": "cannot",
             "won't": "will not",
-            "n't": " not",
-            # Add more contractions if needed
+            "n't": " not",   
         }
         for contraction, expansion in contractions.items():
             text = text.replace(contraction, expansion)
         text = re.sub(r'[^\w\s]', '', text)
         text = re.sub(r'\s+', ' ', text)
         words = text.split()
-        # Remove words with repeating characters
         words = [word for word in words if not re.search(r'(.)\1{2,}', word)]
-        # Remove stopwords
         words = [word for word in words if word not in stop_words]
         return ' '.join(words).strip()
     return text
 
+#tokenization
 def tokenize_text(text):
     if not isinstance(text, str) or not text.strip():
         return []
     try:
         return word_tokenize(str(text))
     except LookupError:
-        # Fallback method if word_tokenize fails
         return text.split()
 
 clause_breakers = {"but", "because", "however", "although", "though", "yet"}
 negative_words = {"bad", "worse", "worst", "terrible", "horrible", "awful", "disgusting"}
 
+#handling negation
 def handle_negation(tokenized_text, negation_scope=3):
     negation_words = {"not", "no", "never", "n't"}
     processed_tokens = []
@@ -81,6 +79,7 @@ def handle_negation(tokenized_text, negation_scope=3):
             processed_tokens.append(token)
     return processed_tokens
 
+#lemmatization
 def lemmatize_texts(texts, batch_size=100):
     nlp = spacy.load("en_core_web_sm", disable=['parser', 'ner'])
     lemmatized_texts = []
@@ -92,13 +91,13 @@ def lemmatize_texts(texts, batch_size=100):
         lemmatized_texts.extend(lemmatized_batch)
     return lemmatized_texts
 
+#english words only
 def is_english(text):
     try:
         return detect(text) == "en"
     except Exception:
         return False
 
-# ------------------ Main Pipeline ------------------
 if __name__ == "__main__":
 
     json_path = "data/yelp_academic_dataset_review.json"
@@ -119,30 +118,25 @@ if __name__ == "__main__":
     texts_to_lemmatize = df['negation_review_str'].tolist()
     df['lemmatized_text'] = lemmatize_texts(texts_to_lemmatize)
 
-    # Filter to English-only text
     df = df[df['lemmatized_text'].apply(is_english)]
 
-    # ------------------ Sentiment Assignment ------------------
     def assign_sentiment(star):
-        # Adjust logic as desired:
-        # 4 or 5 => positive, 3 => neutral, 1 or 2 => negative
         if star >= 4:
             return 'positive'
         elif star == 3:
             return 'neutral'
-        else:  # covers 1 and 2
+        else: 
             return 'negative'
 
     df['sentiment'] = df['stars'].apply(assign_sentiment)
 
-    # ------------------ Saving the Unbalanced Dataset ------------------
+#saving datasets
     unbalanced_csv_path = "data/1kreviews_unbalanced.csv"
     df[['business_id', 'stars', 'date', 'lemmatized_text', 'sentiment']] \
         .rename(columns={'lemmatized_text': 'text'}) \
         .to_csv(unbalanced_csv_path, index=False)
     print(f"Saved unbalanced dataset to {unbalanced_csv_path} with shape: {df.shape}")
 
-    # ------------------ Balancing Classes by Undersampling ------------------
     print("Balancing sentiment distribution...")
     min_class_size = df['sentiment'].value_counts().min()
 

@@ -46,6 +46,7 @@ X_test_seq = tokenizer.texts_to_sequences(X_test_texts)
 X_train_pad = pad_sequences(X_train_seq, maxlen=MAX_SEQUENCE_LEN, padding='post', truncating='post')
 X_test_pad = pad_sequences(X_test_seq, maxlen=MAX_SEQUENCE_LEN, padding='post', truncating='post')
 
+#create lstm model
 def create_lstm_model(vocab_size=MAX_VOCAB_SIZE, embed_dim=100, input_length=MAX_SEQUENCE_LEN):
     model = Sequential()
     model.add(Embedding(input_dim=vocab_size, output_dim=embed_dim, input_length=input_length))
@@ -77,6 +78,7 @@ model.fit(X_train_pad, y_train, epochs=5, batch_size=128, validation_split=0.1, 
 y_pred_probs = model.predict(X_test_pad)
 y_pred = np.argmax(y_pred_probs, axis=1)
 
+#metrics
 acc = accuracy_score(y_test, y_pred)
 prec = precision_score(y_test, y_pred, average='weighted')
 rec = recall_score(y_test, y_pred, average='weighted')
@@ -95,6 +97,7 @@ print(f"Mean CV Accuracy: {np.mean(cv_accuracies):.4f}")
 output_dir = 'output/matrix'
 os.makedirs(output_dir, exist_ok=True)
 
+#plot confusion matrix
 plt.figure()
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
             xticklabels=['Neg','Neu','Pos'], yticklabels=['Neg','Neu','Pos'])
@@ -105,6 +108,7 @@ plt.tight_layout()
 plt.savefig(f'{output_dir}/lstm_confusion_matrix.png')
 plt.close()
 
+#plot roc curve
 plt.figure()
 for i in range(3):
     fpr, tpr, _ = roc_curve(y_test_binarized[:, i], y_pred_probs[:, i])
