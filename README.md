@@ -5,11 +5,7 @@
 
 ## 📌 Objective
 
-The goal of this project is to extract meaningful insights from Yelp restaurant reviews using Natural Language Processing (NLP). The analysis focuses on:
-- Classifying reviews into **positive**, **neutral**, and **negative** categories
-- Discovering **recurring complaints** affecting customer satisfaction
-- Identifying **positive aspects** like service, food, or ambiance
-- Delivering **data-driven insights** to improve business performance
+The goal of this project is to extract meaningful insights from Yelp restaurant reviews using Natural Language Processing (NLP). The analysis focuses on classifying reviews into **positive**, **neutral**, and **negative** categories
 
 ---
 
@@ -30,6 +26,7 @@ The goal of this project is to extract meaningful insights from Yelp restaurant 
 - **Lemmatization/Stemming**
 - **Negation Handling:** e.g., "not good" → "not_good"
 - **Vectorization:** TF-IDF, Word Embeddings (Word2Vec/BERT)
+- **Data Balancing** Balancing the positive/negative/neutral reviews into 33% each.
 
 ---
 
@@ -42,12 +39,14 @@ The goal of this project is to extract meaningful insights from Yelp restaurant 
 - Random Forest
 
 ### Deep Learning Models
-- Word Embeddings + LSTM
-- Word Embeddings + CNN
+- BiLSTM
+- LSTM
+- CNN
+- RNN
+- GRU
 
 ### Transformer-Based
 - RoBERTa (fine-tuned)
-- BERT (comparison benchmark)
 
 ---
 
@@ -84,7 +83,7 @@ The goal of this project is to extract meaningful insights from Yelp restaurant 
 | RNN        | 0.33614  | 0.58349   | 0.33614  | 0.17434  | 0.50671 |
 | GRU        | 0.34144  | 0.41822   | 0.34144  | 0.19040  | 0.50927 |
 
-🚀 *RoBERTa* significantly outperformed all other models with:
+🚀 **RoBERTa** significantly outperformed all other models with:
 - **Highest Accuracy**: 0.80112
 - **Best AUC**: 0.93237
 - **Strong F1 Score**: 0.80253
@@ -95,9 +94,9 @@ The goal of this project is to extract meaningful insights from Yelp restaurant 
 
 ## 🧠 Key Findings
 
-- **BERT outperformed** traditional and deep learning models in accuracy and F1-score.
+- **RoBERTa outperformed** traditional and deep learning models in accuracy and F1-score.
 - Transformer models effectively captured contextual sentiment.
-- Business insights like most-mentioned dishes, recurring complaints, and top-performing features were identified.
+
 
 ---
 
