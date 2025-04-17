@@ -1,42 +1,125 @@
-# yelpReview
+# A Comparative Study of Machine Learning Methods
 
-This project processes Yelp reviews through various stages to clean, tokenize, handle negation, lemmatize, and vectorize the text data. Follow the steps below to run the project:
+**Author:** Krishna Thakar  
+**Faculty Advisors:** Dr. Mohamed Sheha and Dr. Emmanuel Thompson
 
-1. **Convert JSON to CSV**
-   - Run `json_to_csv.py` to convert the Yelp JSON dataset to a CSV file.
-   - This will create `sorted_reviews.csv`.
+## 📌 Objective
 
-2. **Clean the Data**
-   - Run `clean.py` to remove punctuation and other unwanted characters.
-   - This will save the cleaned data to `cleaned_reviews.csv`.
+The goal of this project is to extract meaningful insights from Yelp restaurant reviews using Natural Language Processing (NLP). The analysis focuses on:
+- Classifying reviews into **positive**, **neutral**, and **negative** categories
+- Discovering **recurring complaints** affecting customer satisfaction
+- Identifying **positive aspects** like service, food, or ambiance
+- Delivering **data-driven insights** to improve business performance
 
-3. **Tokenize the Reviews**
-   - Run `tokenize_review.py` to tokenize the reviews.
-   - This will generate `tokenized_reviews.csv`.
+---
 
-4. **Handle Negation**
-   - Run `negation.py` to add a column that handles negation in the reviews.
-   - This will produce `negation_reviews.csv`.
+## 📊 Dataset
 
-5. **Lemmatize the Text**
-   - Run `lemmatization.py` to lemmatize the text and add a new column `lemmatized_text`.
-   - This will save the lemmatized data to `lemmatized_reviews.csv`.
+- **Source:** [Yelp Open Dataset](https://www.yelp.com/dataset)
+- **Volume:** ~20,000 reviews (subset of original 7M)
+- **Timeframe:** 2005–2022
+- **Format:** Structured review text data (CSV/JSON)
 
-6. **Create a Separate Dataset**
-   - Run `after_lemmatized.py` to convert the lemmatized data into a separate dataset.
-   - This will create `lemmatized_dataset.csv`.
+---
 
-7. **Vectorize the Data**
-   - Run `vectorize.py` or `tfidf.py` to vectorize the new dataset using TF-IDF.
-   - This will generate a TF-IDF vectorized dataset for further analysis.
+## 🧹 Preprocessing Steps
 
-   prep the data: pere_data
+- **Text Cleaning:** Lowercasing, punctuation & special character removal, stopword removal
+- **Contraction Handling:** e.g., "don’t" → "do not"
+- **Tokenization:** Splitting text into words
+- **Lemmatization/Stemming**
+- **Negation Handling:** e.g., "not good" → "not_good"
+- **Vectorization:** TF-IDF, Word Embeddings (Word2Vec/BERT)
 
-   
+---
 
-## Running the Scripts
+## 🧠 Modeling Techniques
 
-To run each script, use the following command in your terminal:
+### Traditional ML Models
+- Logistic Regression
+- Support Vector Machine (SVM)
+- Naïve Bayes
+- Random Forest
 
-```sh
-python script_name.py
+### Deep Learning Models
+- Word Embeddings + LSTM
+- Word Embeddings + CNN
+
+### Transformer-Based
+- RoBERTa (fine-tuned)
+- BERT (comparison benchmark)
+
+---
+
+## 📈 Evaluation Metrics
+- Accuracy
+- Precision
+- Recall
+- F1 Score
+- ROC-AUC Curve
+
+---
+
+## 🏆 Best Model Performance
+
+### 🔢 Statistical Machine Learning Results (Table 1)
+| Model               | Accuracy | Precision | Recall   | F1 Score | AUC     |
+|--------------------|----------|-----------|----------|----------|---------|
+| **SVM**            | **0.76103** | **0.76322**   | **0.76103**  | **0.76172**  | **0.90915** |
+| Logistic Regression| 0.76041  | 0.76448   | 0.76411  | 0.76013  | 0.90757 |
+| Naïve Bayes        | 0.72671  | 0.73246   | 0.72671  | 0.72860  | 0.87732 |
+| Random Forest      | 0.71751  | 0.71593   | 0.71751  | 0.71592  | 0.87531 |
+
+📌 *SVM* achieved the best performance among traditional models, with a strong AUC of **0.90915**.
+
+---
+
+### 🤖 Deep Learning & Transformer-Based Results (Table 2)
+| Model      | Accuracy | Precision | Recall   | F1 Score | AUC     |
+|------------|----------|-----------|----------|----------|---------|
+| **RoBERTa**| **0.80112** | **0.80502** | **0.80112** | **0.80253** | **0.93237** |
+| CNN        | 0.74746  | 0.74909   | 0.74746  | 0.74817  | 0.89802 |
+| BiLSTM     | 0.73280  | 0.73371   | 0.73280  | 0.73323  | 0.88507 |
+| LSTM       | 0.33614  | 0.58349   | 0.33614  | 0.17434  | 0.50671 |
+| RNN        | 0.33614  | 0.58349   | 0.33614  | 0.17434  | 0.50671 |
+| GRU        | 0.34144  | 0.41822   | 0.34144  | 0.19040  | 0.50927 |
+
+🚀 *RoBERTa* significantly outperformed all other models with:
+- **Highest Accuracy**: 0.80112
+- **Best AUC**: 0.93237
+- **Strong F1 Score**: 0.80253
+
+✅ **RoBERTa is the overall best-performing model in this study**, showing the effectiveness of transformer-based architectures in sentiment classification.
+
+---
+
+## 🧠 Key Findings
+
+- **BERT outperformed** traditional and deep learning models in accuracy and F1-score.
+- Transformer models effectively captured contextual sentiment.
+- Business insights like most-mentioned dishes, recurring complaints, and top-performing features were identified.
+
+---
+
+## 🧩 Tools & Libraries
+- Python (Pandas, NumPy, Scikit-learn)
+- NLTK / SpaCy
+- TensorFlow / PyTorch
+- HuggingFace Transformers
+- Matplotlib / Seaborn / Plotly
+
+---
+
+## 📍 Future Work
+- Expand aspect-based sentiment analysis (ABSA)
+- Use real-time sentiment tracking for businesses
+- Deploy model as a REST API or Streamlit dashboard
+
+---
+
+## 📬 Contact
+**Krishna Thakar**  
+📧 krishna161003@gmail.com  
+🔗 [LinkedIn](https://www.linkedin.com/in/krsnathkr/) | [GitHub](https://github.com/krsnathkr)  
+
+---
