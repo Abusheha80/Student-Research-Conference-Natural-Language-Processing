@@ -16,7 +16,7 @@ stop_words = set(nltk.corpus.stopwords.words('english'))
 def parse_date(review):
     return datetime.strptime(review['date'], '%Y-%m-%d %H:%M:%S')
 
-def load_and_select_reviews(json_path, top_n=1000000):
+def load_and_select_reviews(json_path, top_n=1000):
     reviews = []
     with open(json_path, 'r', encoding='utf-8') as f:
         for line in f:
@@ -81,7 +81,7 @@ def handle_negation(tokenized_text, negation_scope=3):
             processed_tokens.append(token)
     return processed_tokens
 
-def lemmatize_texts(texts, batch_size=100000):
+def lemmatize_texts(texts, batch_size=100):
     nlp = spacy.load("en_core_web_sm", disable=['parser', 'ner'])
     lemmatized_texts = []
     num_batches = (len(texts) // batch_size) + (1 if len(texts) % batch_size != 0 else 0)
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     df['sentiment'] = df['stars'].apply(assign_sentiment)
 
     # ------------------ Saving the Unbalanced Dataset ------------------
-    unbalanced_csv_path = "data/1mreviews_unbalanced.csv"
+    unbalanced_csv_path = "data/1kreviews_unbalanced.csv"
     df[['business_id', 'stars', 'date', 'lemmatized_text', 'sentiment']] \
         .rename(columns={'lemmatized_text': 'text'}) \
         .to_csv(unbalanced_csv_path, index=False)
@@ -158,6 +158,6 @@ if __name__ == "__main__":
     final_df = balanced_df[['business_id', 'stars', 'date', 'lemmatized_text', 'sentiment']] \
         .rename(columns={'lemmatized_text': 'text'})
 
-    final_csv_path = "data/1mreviews.csv"
+    final_csv_path = "data/1kreviews.csv"
     final_df.to_csv(final_csv_path, index=False)
     print(f"Saved balanced dataset to {final_csv_path} with shape: {final_df.shape}")

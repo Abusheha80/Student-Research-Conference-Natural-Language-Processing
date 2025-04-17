@@ -3,13 +3,13 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix, roc_curve, roc_auc_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 from transformers import (
-    DistilBertTokenizerFast,
-    DistilBertForSequenceClassification,
+    RobertaTokenizerFast,
+    RobertaForSequenceClassification,
     TrainingArguments, Trainer,
     EarlyStoppingCallback
 )
@@ -29,8 +29,8 @@ X_train, X_test, y_train, y_test = train_test_split(
     texts, labels, test_size=0.3, stratify=labels, random_state=42)
 
 # Dynamic Tokenization
-model_name = "distilbert-base-uncased"
-tokenizer = DistilBertTokenizerFast.from_pretrained(model_name)
+model_name = "roberta-base"
+tokenizer = RobertaTokenizerFast.from_pretrained(model_name)
 
 class YelpDataset(Dataset):
     def __init__(self, texts, labels, tokenizer, max_length=128):
@@ -50,8 +50,8 @@ test_dataset = YelpDataset(X_test, y_test, tokenizer)
 
 # Training Args with Optimizations
 training_args = TrainingArguments(
-    output_dir="output/distilbert_final",
-    num_train_epochs=3,
+    output_dir="output/roberta_final",
+    num_train_epochs=5,
     per_device_train_batch_size=32,
     per_device_eval_batch_size=32,
     evaluation_strategy="epoch",
@@ -59,11 +59,11 @@ training_args = TrainingArguments(
     load_best_model_at_end=True,
     metric_for_best_model="f1",
     greater_is_better=True,
-    learning_rate=2e-5,
+    learning_rate=1e-5,
     weight_decay=0.01,
-    warmup_steps=500,
+    warmup_steps=1000,
     gradient_accumulation_steps=2,
-    logging_steps=100,
+    logging_steps=50,
 )
 
 def compute_metrics(eval_pred):
@@ -73,15 +73,15 @@ def compute_metrics(eval_pred):
     precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='weighted')
     return {"accuracy": acc, "precision": precision, "recall": recall, "f1": f1}
 
-model = DistilBertForSequenceClassification.from_pretrained(model_name, num_labels=3)
+model = RobertaForSequenceClassification.from_pretrained(model_name, num_labels=3)
 
 trainer = Trainer(
-    model=model_final,
+    model=model,
     args=training_args,
     train_dataset=train_dataset,
     eval_dataset=test_dataset,
     compute_metrics=compute_metrics,
-    callbacks=[EarlyStoppingCallback(early_stopping_patience=2)]
+    callbacks=[EarlyStoppingCallback(early_stopping_patience=3)]
 )
 
 trainer.train()
@@ -106,7 +106,7 @@ sns.heatmap(cm, annot=True, cmap='Blues', fmt='d', xticklabels=['Neg','Neu','Pos
 plt.title("Confusion Matrix")
 plt.ylabel("Actual")
 plt.xlabel("Predicted")
-plt.savefig("output/matrix/distilbert_confusion_matrix.png")
+plt.savefig("output/matrix/roberta_confusion_matrix.png")
 
 # ROC Curve
 plt.figure()
@@ -116,10 +116,10 @@ for i in range(3):
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.legend()
-plt.savefig("output/matrix/distilbert_roc_curve.png")
+plt.savefig("output/matrix/roberta_roc_curve.png")
 
 # Metrics CSV
 metrics_df = pd.DataFrame({"Accuracy": [acc], "Precision": [prec], "Recall": [rec], "F1 Score": [f1], "AUC": [auc]})
-metrics_df.to_csv("output/matrix/distilbert_metrics.csv", index=False)
+metrics_df.to_csv("output/matrix/roberta_metrics.csv", index=False)
 
 print(f"Accuracy: {acc:.4f}, Precision: {prec:.4f}, Recall: {rec:.4f}, F1: {f1:.4f}, AUC: {auc:.4f}")

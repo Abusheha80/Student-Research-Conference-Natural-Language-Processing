@@ -3,15 +3,16 @@ import os
 
 # Define the order of scripts
 script_order = [
+    "dbert.py",
+    "gru.py",
+    "bilstm.py",
     "logistic.py",
-    "svm.py",
     "randomforest.py",
     "naive.py",
     "cnn.py",
     "rnn.py",
     "lstm.py",
-    "gru.py",
-    "bilstm.py",
+    "svm.py"
 ]
 
 # Path to your models folder
